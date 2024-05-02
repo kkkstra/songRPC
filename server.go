@@ -16,12 +16,12 @@ const MagicNumber = 0x131cad6
 
 type Option struct {
 	MagicNumber int        // 用于标识 songRPC 请求
-	CodeType    codec.Type // 编解码方式
+	CodecType   codec.Type // 编解码方式
 }
 
 var DefaultOption = &Option{
 	MagicNumber: MagicNumber,
-	CodeType:    codec.GobType,
+	CodecType:   codec.GobType,
 }
 
 type Server struct{}
@@ -40,7 +40,7 @@ var (
 	invalidRequest = struct{}{}
 )
 
-// 等待连接并处理请求
+// Accept 等待连接并处理请求
 func (server *Server) Accept(listener net.Listener) {
 	for {
 		conn, err := listener.Accept()
@@ -66,9 +66,9 @@ func (server *Server) ServeConn(conn io.ReadWriteCloser) {
 		log.Printf("rpc server: invalid magic number %x\n", option.MagicNumber)
 		return
 	}
-	f := codec.NewCodecFuncMap[option.CodeType]
+	f := codec.NewCodecFuncMap[option.CodecType]
 	if f == nil {
-		log.Printf("rpc server: invalid code-type %s\n", option.CodeType)
+		log.Printf("rpc server: invalid code-type %s\n", option.CodecType)
 		return
 	}
 
@@ -128,7 +128,7 @@ func (server *Server) readRequest(cc codec.Codec) (*request, error) {
 func (server *Server) handleRequest(cc codec.Codec, req *request, sending *sync.Mutex, wg *sync.WaitGroup) {
 	defer wg.Done()
 	log.Println(req.header, req.argv.Elem())
-	req.replyv = reflect.ValueOf(fmt.Sprintf("rpc resp %d", req.header.Seq))
+	req.replyv = reflect.ValueOf(fmt.Sprintf("songRPC resp %d", req.header.Seq))
 	server.sendResponse(cc, req.header, req.replyv.Interface(), sending)
 }
 
